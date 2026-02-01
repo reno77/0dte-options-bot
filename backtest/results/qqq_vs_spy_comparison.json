@@ -1,0 +1,91 @@
+{
+  "date": "2026-02-02",
+  "source": "Moomoo OpenD real-time option chains",
+  "qqq_price": 620,
+  "spy_price": 600,
+  "comparison": {
+    "volatility": {
+      "spy_daily": "2.41%",
+      "qqq_daily": "3.65%",
+      "ratio": "QQQ ~1.5x SPY"
+    },
+    "atm_iv_1dte": {
+      "spy": "~24%",
+      "qqq": "~24%",
+      "note": "Similar near-money IV despite different realized vol"
+    },
+    "bid_ask_atm": {
+      "spy": "$0.03-0.05",
+      "qqq": "$0.03-0.06"
+    },
+    "bid_ask_otm": {
+      "spy": "Tighter (more liquid)",
+      "qqq": "Slightly wider"
+    },
+    "daily_volume_atm": {
+      "spy": "5K-10K+",
+      "qqq": "5K-7K"
+    },
+    "settlement": {
+      "spy": "American (physical)",
+      "qqq": "American (physical)"
+    },
+    "expiry_time": "4:15 PM ET (both)",
+    "index_tracked": {
+      "spy": "S&P 500 (diversified)",
+      "qqq": "Nasdaq 100 (tech-heavy, 50%+ tech)"
+    },
+    "strike_spacing": {
+      "qqq_near_atm": "$1",
+      "qqq_far_otm": "$5",
+      "qqq_range": "$500-$730"
+    },
+    "correlation": "~0.90"
+  },
+  "qqq_1dte_chain": {
+    "expiry": "2026-02-03",
+    "atm_strike": 620,
+    "atm_call_delta": 0.55,
+    "atm_put_delta": -0.45,
+    "otm_puts": [
+      {"strike": 590, "mid": 0.16, "delta": -0.025},
+      {"strike": 595, "mid": 0.26, "delta": -0.041},
+      {"strike": 600, "mid": 0.44, "delta": -0.068},
+      {"strike": 605, "mid": 0.80, "delta": -0.116},
+      {"strike": 610, "mid": 1.40, "delta": -0.191},
+      {"strike": 615, "mid": 2.37, "delta": -0.300}
+    ],
+    "otm_calls": [
+      {"strike": 630, "mid": 0.78, "delta": 0.166},
+      {"strike": 631, "mid": 0.59, "delta": 0.135},
+      {"strike": 633, "mid": 0.31, "delta": 0.082},
+      {"strike": 635, "mid": 0.15, "delta": 0.046},
+      {"strike": 637, "mid": 0.07, "delta": 0.024}
+    ]
+  },
+  "example_iron_condor_1dte": {
+    "description": "10-delta wings, $5 wide, QQQ 1DTE",
+    "put_spread": {
+      "sell": {"strike": 605, "premium": 0.80, "delta": -0.116},
+      "buy": {"strike": 600, "premium": 0.44, "delta": -0.068},
+      "credit": 0.36
+    },
+    "call_spread": {
+      "sell": {"strike": 633, "premium": 0.31, "delta": 0.082},
+      "buy": {"strike": 638, "premium": 0.05, "delta": 0.01},
+      "credit": 0.26
+    },
+    "total_credit": 0.62,
+    "max_risk": 5.00,
+    "credit_pct_of_risk": "12.4%",
+    "breakevens": {"lower": 604.38, "upper": 633.62},
+    "range_pct": "4.7%"
+  },
+  "qqq_2dte_premium_comparison": {
+    "note": "2DTE premiums ~30-50% higher due to extra theta",
+    "example_p605": {
+      "1dte": {"premium": 0.80, "delta": -0.116},
+      "2dte": {"premium": 1.35, "delta": -0.154}
+    }
+  }
+}
