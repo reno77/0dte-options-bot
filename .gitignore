@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+
+# Config with secrets
+config.json
+
+# Data files (too large for git)
+backtest/data/*.csv
+backtest/data/*.parquet
+backtest/data/*.pkl
+backtest/results/*.csv
+backtest/results/*.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.log

@@ -1,0 +1,22 @@
+# Core
+moomoo>=9.0
+pandas>=2.0
+numpy>=1.24
+
+# Backtesting & Analysis
+scipy>=1.10
+matplotlib>=3.7
+seaborn>=0.12
+
+# Options pricing
+py_vollib>=1.0.1
+mibian>=0.1.3
+
+# Data sources (free tier)
+yfinance>=0.2.30
+alpaca-py>=0.25
+
+# Utils
+python-dotenv>=1.0
+schedule>=1.2
+loguru>=0.7

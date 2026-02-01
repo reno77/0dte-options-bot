@@ -1,0 +1,56 @@
+{
+    "opend": {
+        "host": "127.0.0.1",
+        "port": 11111,
+        "security_firm": "FUTUINC"
+    },
+    "trading": {
+        "environment": "SIMULATE",
+        "market": "US",
+        "trade_password": "",
+        "max_daily_risk_pct": 2.0,
+        "max_positions": 4,
+        "min_entry_interval_min": 30
+    },
+    "instruments": ["SPX", "SPY", "QQQ"],
+    "strategies": {
+        "iron_condor_meic": {
+            "enabled": true,
+            "delta_range": [5, 15],
+            "spread_width": 5,
+            "stop_loss_multiplier": 1.0,
+            "take_profit_cents": 5,
+            "entry_times_et": ["10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30"],
+            "instrument": "SPX"
+        },
+        "orb_credit_spread": {
+            "enabled": false,
+            "opening_range_start": "09:30",
+            "opening_range_end": "10:30",
+            "spread_width": 5,
+            "delta_target": 10,
+            "stop_loss_pct": 100,
+            "instrument": "SPX"
+        },
+        "afternoon_ic": {
+            "enabled": false,
+            "otm_pct": 0.3,
+            "spread_width": 5,
+            "entry_time_et": "14:00",
+            "instrument": "SPX"
+        },
+        "directional_spread": {
+            "enabled": false,
+            "short_delta_range": [20, 40],
+            "long_delta_range": [10, 20],
+            "spread_width_range": [2, 5],
+            "instrument": "SPY"
+        }
+    },
+    "risk": {
+        "max_account_risk_pct": 2.0,
+        "max_single_trade_risk_pct": 0.5,
+        "max_daily_loss_pct": 3.0,
+        "circuit_breaker_loss_pct": 5.0
+    }
+}
