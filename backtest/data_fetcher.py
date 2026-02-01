@@ -30,17 +30,51 @@ def fetch_underlying_intraday(symbol: str, period: str = "30d", interval: str = 
     Fetch intraday price data from yfinance.
     
     Free tier limitations:
-    - 1m data: max 30 days history
+    - 1m data: max 7 days per request, ~30 days total history
     - 5m data: max 60 days
     - 15m data: max 60 days
     - 1h data: max 730 days
+    
+    For 1m data, we fetch in 7-day chunks to get up to 30 days.
     """
     print(f"[Data] Fetching {symbol} intraday ({interval}, {period})...")
     ticker = yf.Ticker(symbol)
-    df = ticker.history(period=period, interval=interval)
     
-    if df.empty:
-        raise ValueError(f"No data returned for {symbol}")
+    if interval == "1m":
+        # Fetch in 7-day chunks (yfinance limit)
+        import re
+        days_match = re.search(r'(\d+)d', period)
+        total_days = int(days_match.group(1)) if days_match else 30
+        total_days = min(total_days, 30)  # yfinance max for 1m
+        
+        all_dfs = []
+        end_date = datetime.date.today()
+        
+        for chunk_start in range(0, total_days, 7):
+            chunk_end = min(chunk_start + 7, total_days)
+            start = end_date - datetime.timedelta(days=chunk_end)
+            end = end_date - datetime.timedelta(days=chunk_start)
+            
+            try:
+                chunk = ticker.history(start=start, end=end, interval="1m")
+                if not chunk.empty:
+                    all_dfs.append(chunk)
+                    print(f"  [chunk] {start} → {end}: {len(chunk)} bars")
+            except Exception as e:
+                print(f"  [chunk] {start} → {end}: failed ({e})")
+            
+            import time
+            time.sleep(0.5)  # Rate limiting
+        
+        if not all_dfs:
+            raise ValueError(f"No data returned for {symbol}")
+        
+        df = pd.concat(all_dfs).sort_index()
+        df = df[~df.index.duplicated(keep='first')]
+    else:
+        df = ticker.history(period=period, interval=interval)
+        if df.empty:
+            raise ValueError(f"No data returned for {symbol}")
     
     # Clean up
     df.index = pd.to_datetime(df.index)
@@ -48,8 +82,8 @@ def fetch_underlying_intraday(symbol: str, period: str = "30d", interval: str = 
     df.columns = ["open", "high", "low", "close", "volume"]
     
     # Save
-    fname = f"{symbol}_intraday_{interval}_{period}.parquet"
-    df.to_parquet(DATA_DIR / fname)
+    fname = f"{symbol}_intraday_{interval}_{period}.csv"
+    df.to_csv(DATA_DIR / fname)
     print(f"[Data] Saved {len(df)} bars to {fname}")
     
     return df
@@ -68,8 +102,8 @@ def fetch_underlying_daily(symbol: str, years: int = 5) -> pd.DataFrame:
     df = df[["Open", "High", "Low", "Close", "Volume"]]
     df.columns = ["open", "high", "low", "close", "volume"]
     
-    fname = f"{symbol}_daily_{years}y.parquet"
-    df.to_parquet(DATA_DIR / fname)
+    fname = f"{symbol}_daily_{years}y.csv"
+    df.to_csv(DATA_DIR / fname)
     print(f"[Data] Saved {len(df)} daily bars to {fname}")
     
     return df
@@ -84,7 +118,7 @@ def fetch_vix(period: str = "5y") -> pd.DataFrame:
     df = df[["Open", "High", "Low", "Close"]]
     df.columns = ["open", "high", "low", "close"]
     
-    df.to_parquet(DATA_DIR / f"VIX_{period}.parquet")
+    df.to_csv(DATA_DIR / f"VIX_{period}.csv")
     print(f"[Data] Saved {len(df)} VIX bars")
     
     return df

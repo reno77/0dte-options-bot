@@ -29,24 +29,24 @@ RESULTS_DIR.mkdir(exist_ok=True)
 
 def load_or_fetch_data(symbol: str, fetch: bool = True) -> tuple:
     """Load cached data or fetch fresh."""
-    intraday_files = list(DATA_DIR.glob(f"{symbol}_intraday_*.parquet"))
-    daily_files = list(DATA_DIR.glob(f"{symbol}_daily_*.parquet"))
-    vix_files = list(DATA_DIR.glob("VIX_*.parquet"))
+    intraday_files = list(DATA_DIR.glob(f"{symbol}_intraday_*.csv"))
+    daily_files = list(DATA_DIR.glob(f"{symbol}_daily_*.csv"))
+    vix_files = list(DATA_DIR.glob("VIX_*.csv"))
     
     if fetch or not intraday_files:
         intraday = fetch_underlying_intraday(symbol, period="30d", interval="1m")
     else:
-        intraday = pd.read_parquet(intraday_files[-1])
+        intraday = pd.read_csv(intraday_files[-1])
     
     if fetch or not daily_files:
         daily = fetch_underlying_daily(symbol, years=3)
     else:
-        daily = pd.read_parquet(daily_files[-1])
+        daily = pd.read_csv(daily_files[-1])
     
     if fetch or not vix_files:
         vix = fetch_vix("3y")
     else:
-        vix = pd.read_parquet(vix_files[-1])
+        vix = pd.read_csv(vix_files[-1])
     
     return intraday, daily, vix
 

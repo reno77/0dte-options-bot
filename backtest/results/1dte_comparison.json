@@ -1,0 +1,39 @@
+{
+  "iron_condor": {
+    "strategy": "1DTE Iron Condor",
+    "total_trades": 54,
+    "total_return_pct": 0.06,
+    "win_rate_pct": 94.4,
+    "avg_win": 1.34,
+    "avg_loss": -2.12,
+    "win_loss_ratio": 0.63,
+    "max_drawdown_pct": -0.01,
+    "profitable_days_pct": 89.5,
+    "total_pnl": 61.78,
+    "final_equity": 100061.77,
+    "status_breakdown": {
+      "expired": 51,
+      "stopped": 3
+    },
+    "avg_premium_collected": 1.34,
+    "avg_vix": 16.1
+  },
+  "orb": {
+    "strategy": "1DTE ORB Credit Spread",
+    "total_trades": 18,
+    "total_return_pct": 0.01,
+    "win_rate_pct": 100.0,
+    "avg_win": 0.56,
+    "avg_loss": 0,
+    "max_drawdown_pct": 0.0,
+    "profitable_days_pct": 94.7,
+    "total_pnl": 10.06,
+    "final_equity": 100010.06,
+    "bullish_trades": 13,
+    "bearish_trades": 5,
+    "status_breakdown": {
+      "expired": 18
+    },
+    "avg_credit": 0.56
+  }
+}
