@@ -17,6 +17,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 
+import pandas as pd
+
 try:
     from moomoo import (
         OpenSecTradeContext, OpenQuoteContext,
@@ -25,7 +27,7 @@ try:
         RET_OK, RET_ERROR
     )
 except ImportError:
-    print("ERROR: moomoo SDK not installed. Run: pip install moomoo")
+    print("ERROR: moomoo SDK not installed. Run: pip install moomoo-api")
     sys.exit(1)
 
 logger = logging.getLogger(__name__)
@@ -274,5 +276,4 @@ class MoomooGateway:
         return q.get("last", 0.0)
 
 
-# Avoid circular import — import pandas at module level
-import pandas as pd
+# pandas imported at top of file

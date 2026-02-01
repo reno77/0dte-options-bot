@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-02-01T19:29:43.157567",
+  "config": {
+    "delta_min": 0.05,
+    "delta_max": 0.15,
+    "spread_width": 5.0,
+    "stop_loss_mult": 1.0,
+    "max_positions": 2,
+    "entry_interval_min": 30,
+    "underlying": "SPY",
+    "quantity": 1
+  },
+  "positions": [],
+  "trade_log": [],
+  "summary": {
+    "total_positions": 0,
+    "open": 0,
+    "closed": 0,
+    "wins": 0,
+    "losses": 0,
+    "win_rate": "N/A",
+    "total_pnl": 0,
+    "avg_pnl": 0
+  }
+}
