@@ -32,3 +32,4 @@ Thumbs.db
 # Environment
 .env
 *.log
+backtest/results/risk_analysis_*.png

@@ -1,0 +1,178 @@
+{
+  "config": {
+    "delta_min": 0.12,
+    "delta_max": 0.25,
+    "spread_width": 15.0,
+    "stop_loss_mult": 1.0,
+    "entry_bar_start": 2,
+    "entry_bar_end": 6,
+    "entry_interval": 1,
+    "max_entries": 5,
+    "strike_interval": 1.0
+  },
+  "tail_stats": {
+    "worst_5_days": [
+      -759.175671984111,
+      -757.6067873728588,
+      -749.2038736330107,
+      -738.7280379873482,
+      -727.447889887439
+    ],
+    "worst_10_days": [
+      -759.175671984111,
+      -757.6067873728588,
+      -749.2038736330107,
+      -738.7280379873482,
+      -727.447889887439,
+      -726.2361117917637,
+      -724.0977787815642,
+      -721.9225684673856,
+      -721.3613611883502,
+      -718.4906551910008
+    ],
+    "best_5_days": [
+      848.8387728812204,
+      847.3470169580993,
+      845.1760069962186,
+      843.7743682343947,
+      843.5874137239069
+    ],
+    "max_consecutive_losses": 40,
+    "max_consecutive_wins": 125,
+    "var_95": -0.2532305588408767,
+    "var_99": -0.45704619498577725,
+    "cvar_95": -0.3556523040860046,
+    "cvar_99": -0.4746071519721351,
+    "skewness": -1.1321758429528146,
+    "kurtosis": 0.6986297001097803,
+    "jarque_bera_stat": 169.63102963003675,
+    "jarque_bera_pvalue": 1.4624800013814839e-37,
+    "is_normal": false,
+    "total_win_amount": 366306.1002258132,
+    "total_loss_amount": -80184.41543571421,
+    "profit_factor": 4.568295450373268,
+    "avg_win": 125.533276293973,
+    "avg_loss": -113.41501476055758,
+    "win_loss_ratio": 1.1068488291343044,
+    "expectancy_per_trade": 78.93011994209628
+  },
+  "slippage_sensitivity": [
+    {
+      "slippage_per_leg": 0.0,
+      "total_slippage_per_ic": 0.0,
+      "total_return_pct": 286.12,
+      "num_trades": 3625,
+      "win_rate": 80.5,
+      "max_dd_pct": -2.48,
+      "final_equity": 386121.68,
+      "total_pnl": 286121.68,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.01,
+      "total_slippage_per_ic": 0.04,
+      "total_return_pct": 260.95,
+      "num_trades": 3625,
+      "win_rate": 80.1,
+      "max_dd_pct": -2.67,
+      "final_equity": 360946.81,
+      "total_pnl": 260946.81,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.02,
+      "total_slippage_per_ic": 0.08,
+      "total_return_pct": 235.37,
+      "num_trades": 3625,
+      "win_rate": 79.6,
+      "max_dd_pct": -2.94,
+      "final_equity": 335373.5,
+      "total_pnl": 235373.5,
+      "elapsed_sec": 0.01
+    },
+    {
+      "slippage_per_leg": 0.03,
+      "total_slippage_per_ic": 0.12,
+      "total_return_pct": 209.91,
+      "num_trades": 3625,
+      "win_rate": 79.1,
+      "max_dd_pct": -3.34,
+      "final_equity": 309910.82,
+      "total_pnl": 209910.82,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.05,
+      "total_slippage_per_ic": 0.2,
+      "total_return_pct": 159.25,
+      "num_trades": 3625,
+      "win_rate": 78.0,
+      "max_dd_pct": -4.66,
+      "final_equity": 259246.78,
+      "total_pnl": 159246.78,
+      "elapsed_sec": 0.03
+    },
+    {
+      "slippage_per_leg": 0.08,
+      "total_slippage_per_ic": 0.32,
+      "total_return_pct": 84.77,
+      "num_trades": 3625,
+      "win_rate": 76.2,
+      "max_dd_pct": -8.3,
+      "final_equity": 184765.22,
+      "total_pnl": 84765.22,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.1,
+      "total_slippage_per_ic": 0.4,
+      "total_return_pct": 35.61,
+      "num_trades": 3625,
+      "win_rate": 74.8,
+      "max_dd_pct": -12.5,
+      "final_equity": 135613.34,
+      "total_pnl": 35613.34,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.15,
+      "total_slippage_per_ic": 0.6,
+      "total_return_pct": -68.9,
+      "num_trades": 3234,
+      "win_rate": 53.9,
+      "max_dd_pct": -73.74,
+      "final_equity": 31104.71,
+      "total_pnl": -68895.29,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.2,
+      "total_slippage_per_ic": 0.8,
+      "total_return_pct": -66.5,
+      "num_trades": 1504,
+      "win_rate": 14.6,
+      "max_dd_pct": -66.7,
+      "final_equity": 33502.23,
+      "total_pnl": -66497.77,
+      "elapsed_sec": 0.02
+    },
+    {
+      "slippage_per_leg": 0.3,
+      "total_slippage_per_ic": 1.2,
+      "total_return_pct": 0.0,
+      "num_trades": 0,
+      "win_rate": 0,
+      "max_dd_pct": 0.0,
+      "final_equity": 100000.0,
+      "total_pnl": 0.0,
+      "elapsed_sec": 0.02
+    }
+  ],
+  "summary": {
+    "total_return_pct": 286.12,
+    "num_trades": 3625,
+    "win_rate": 80.5,
+    "max_dd_pct": -2.48,
+    "final_equity": 386121.68
+  }
+}
