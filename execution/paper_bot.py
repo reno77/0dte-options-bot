@@ -28,6 +28,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from execution.moomoo_gateway import MoomooGateway
 from execution.iron_condor import IronCondorEngine, PositionStatus
 
+# Market sentiment integration
+try:
+    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "trading" / "ml" / "sentiment"))
+    from market_sentiment import get_market_stress, should_skip_0dte_entry, get_0dte_config_overrides
+    HAS_SENTIMENT = True
+except ImportError:
+    HAS_SENTIMENT = False
+
 # ==================== Config ====================
 
 DEFAULT_CONFIG = {
@@ -38,11 +46,11 @@ DEFAULT_CONFIG = {
     
     # Strategy (from optimizer best config — conservative/Sharpe)
     "underlying": "SPY",
-    "delta_min": 0.05,
-    "delta_max": 0.15,
-    "spread_width": 5.0,
-    "stop_loss_mult": 1.0,
-    "max_positions": 2,
+    "delta_min": 0.08,
+    "delta_max": 0.20,
+    "spread_width": 10.0,
+    "stop_loss_mult": 1.5,
+    "max_positions": 3,
     "entry_interval_min": 30,
     "quantity": 1,
     
@@ -122,6 +130,7 @@ class PaperBot:
         self.cycle_count = 0
         self.last_chain_fetch = None
         self.cached_chain = None
+        self._last_underlying_price = 0
     
     def start(self):
         """Start the paper trading bot."""
@@ -153,6 +162,8 @@ class PaperBot:
             
             # Initialize engine with trade context
             from moomoo import TrdEnv
+            # Use OPTIONS paper account (4190846), not STOCK (4190847)
+            options_acc_id = self.config.get("options_acc_id", 4190846)
             self.engine = IronCondorEngine(
                 trade_ctx=self.gateway._trade_ctx,
                 trd_env=TrdEnv.SIMULATE if self.config["paper_trading"] else TrdEnv.REAL,
@@ -164,6 +175,7 @@ class PaperBot:
                 entry_interval_min=self.config["entry_interval_min"],
                 underlying=self.config["underlying"],
                 quantity=self.config["quantity"],
+                acc_id=options_acc_id,
             )
         else:
             # Dry run — create engine without real connection
@@ -215,45 +227,75 @@ class PaperBot:
         
         self._shutdown()
     
+    def _get_et_now(self):
+        """Get current time in US/Eastern."""
+        try:
+            import pytz
+            et = pytz.timezone('US/Eastern')
+            return datetime.now(et)
+        except ImportError:
+            # Fallback: assume SGT (GMT+8), ET = SGT - 13h (EST) or SGT - 12h (EDT)
+            # Conservative: use -13h (EST, Nov-Mar)
+            return datetime.now() - timedelta(hours=13)
+
     def _run_cycle(self):
         """Single trading cycle."""
-        now = datetime.now()
+        now_et = self._get_et_now()
+        now = datetime.now()  # Local time for logging
         
-        # Check market hours (simplified — assumes ET)
-        hour = now.hour
+        # Check market hours in ET
+        hour = now_et.hour
+        minute = now_et.minute
+        weekday = now_et.weekday()  # 0=Mon, 6=Sun
+        
+        # No trading on weekends
+        if weekday >= 5:
+            if self.cycle_count == 0:
+                logger.info(f"Weekend - no trading (ET: {now_et.strftime('%A %H:%M')})")
+            return
         
         # Before market: show status
-        if hour < 9 or (hour == 9 and now.minute < 30):
+        if hour < 9 or (hour == 9 and minute < 30):
             if self.cycle_count == 0:
-                logger.info("⏳ Waiting for market open (9:30 AM ET)")
+                logger.info(f"Waiting for market open (ET: {now_et.strftime('%H:%M')}, opens 9:30)")
             return
         
         # After market: wrap up
         if hour >= 16:
             if self.cycle_count % 10 == 0:
                 summary = self.engine.get_summary()
-                logger.info(f"📊 End of day: {json.dumps(summary)}")
+                logger.info(f"End of day (ET: {now_et.strftime('%H:%M')}): {json.dumps(summary)}")
             return
         
         # During market hours
-        logger.debug(f"Cycle #{self.cycle_count}")
+        logger.debug(f"Cycle #{self.cycle_count} (ET: {now_et.strftime('%H:%M')})")
         
         # 1. Get underlying price
-        if self.config["dry_run"]:
-            # In dry run, use yfinance for price
+        underlying_price = 0
+        logger.info(f"Cycle {self.cycle_count}: getting price...")
+        
+        # Try moomoo first (may not have US ETF quote rights)
+        if not self.config["dry_run"]:
+            try:
+                underlying_price = self.gateway.get_underlying_price(self.config["underlying"])
+            except Exception as e:
+                logger.debug(f"Moomoo quote unavailable: {e}")
+        
+        # Fallback: yfinance (always works, free)
+        if underlying_price <= 0:
             try:
                 import yfinance as yf
                 ticker = yf.Ticker(self.config["underlying"])
-                hist = ticker.history(period="1d", interval="1m")
-                underlying_price = float(hist["Close"].iloc[-1]) if not hist.empty else 0
-            except:
-                underlying_price = 692.0  # Fallback
-        else:
-            underlying_price = self.gateway.get_underlying_price(self.config["underlying"])
+                underlying_price = float(ticker.fast_info.last_price)
+                logger.info(f"  Price from yfinance: ${underlying_price:.2f}")
+            except Exception as e:
+                logger.warning(f"yfinance fallback failed: {e}")
         
         if underlying_price <= 0:
             logger.warning("Could not get underlying price")
             return
+        
+        self._last_underlying_price = underlying_price
         
         # 2. Check existing positions
         if self.engine.positions:
@@ -261,13 +303,56 @@ class PaperBot:
             for act in actions:
                 logger.info(f"Position action: {act}")
         
-        # 3. Consider new entries
-        if self.engine.should_enter():
+        # 3. Check market sentiment before entries
+        sentiment_skip = False
+        if HAS_SENTIMENT:
+            try:
+                skip, reason = should_skip_0dte_entry()
+                if skip:
+                    logger.warning(f"🛑 SENTIMENT BLOCK: {reason}")
+                    sentiment_skip = True
+                else:
+                    stress = get_market_stress()
+                    sig = stress.get('signal', 'unknown')
+                    score = stress.get('stress_score', 0)
+                    stale = stress.get('stale', True)
+                    if not stale:
+                        emoji = {"calm": "🟢", "neutral": "🟡", "elevated": "🟠", "high_stress": "🔴"}
+                        logger.info(f"  {emoji.get(sig, '⚪')} Sentiment: {sig} (stress={score:.2f})")
+                        
+                        # Apply config overrides for elevated stress
+                        if sig == 'elevated':
+                            overrides = get_0dte_config_overrides({
+                                'delta_min': self.config['delta_min'],
+                                'delta_max': self.config['delta_max'],
+                                'spread_width': self.config['spread_width'],
+                                'max_positions': self.config['max_positions'],
+                                'stop_loss_mult': self.config['stop_loss_mult'],
+                            })
+                            logger.info(f"  Sentiment adjustments: {overrides.get('reason', '')}")
+                            # Temporarily adjust engine params
+                            self.engine.delta_min = overrides.get('delta_min', self.engine.delta_min)
+                            self.engine.delta_max = overrides.get('delta_max', self.engine.delta_max)
+                            self.engine.spread_width = overrides.get('spread_width', self.engine.spread_width)
+                            self.engine.max_positions = overrides.get('max_positions', self.engine.max_positions)
+                    else:
+                        logger.debug("  Sentiment data stale — using defaults")
+            except Exception as e:
+                logger.debug(f"  Sentiment check error: {e}")
+
+        # 3b. Consider new entries
+        logger.info(f"  Checking entry conditions...")
+        should = self.engine.should_enter()
+        logger.info(f"  Should enter: {should}")
+        if should and not sentiment_skip:
             chain = self._get_option_chain()
             if chain is not None and not chain.empty:
-                # Find next expiration (0DTE or 1DTE)
-                today = now.strftime("%Y-%m-%d")
-                tomorrow = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+                # Find next valid expiration
+                # If after 4 PM ET, today's options are expired — use tomorrow
+                today = now_et.strftime("%Y-%m-%d")
+                tomorrow = (now_et + timedelta(days=1)).strftime("%Y-%m-%d")
+                if now_et.hour >= 16:
+                    today = tomorrow  # Today's options expired, skip to tomorrow
                 
                 # Try 0DTE first, then 1DTE
                 for exp in [today, tomorrow]:
@@ -285,9 +370,18 @@ class PaperBot:
             summary = self.engine.get_summary()
             open_pos = sum(1 for p in self.engine.positions 
                          if p.status == PositionStatus.OPEN)
+            # Include sentiment in status
+            sent_str = ""
+            if HAS_SENTIMENT:
+                try:
+                    stress = get_market_stress()
+                    if not stress.get('stale'):
+                        sent_str = f" | Mkt:{stress.get('signal','?')}({stress.get('stress_score',0):.2f})"
+                except Exception:
+                    pass
             logger.info(f"📊 Status: {self.config['underlying']}=${underlying_price:.2f} | "
                        f"Open:{open_pos} | PnL:${summary['total_pnl']:.2f} | "
-                       f"WR:{summary['win_rate']} | Cycle:{self.cycle_count}")
+                       f"WR:{summary['win_rate']} | Cycle:{self.cycle_count}{sent_str}")
     
     def _get_option_chain(self) -> pd.DataFrame:
         """Get option chain (cached for 5 minutes)."""
@@ -299,7 +393,26 @@ class PaperBot:
             return self.cached_chain
         
         try:
-            if self.config["dry_run"]:
+            if not self.config["dry_run"]:
+                # Use moomoo — filter to near-ATM strikes to limit API calls
+                underlying_price = self._last_underlying_price or 695
+                strike_range = underlying_price * 0.06  # ±6% from ATM
+                now_et = self._get_et_now()
+                # If after 4 PM ET, start from tomorrow
+                if now_et.hour >= 16:
+                    start_dt = now_et + timedelta(days=1)
+                else:
+                    start_dt = now_et
+                self.cached_chain = self.gateway.get_option_chain(
+                    symbol=self.config["underlying"],
+                    start_date=start_dt.strftime("%Y-%m-%d"),
+                    end_date=(start_dt + timedelta(days=2)).strftime("%Y-%m-%d"),
+                    strike_min=underlying_price - strike_range,
+                    strike_max=underlying_price + strike_range,
+                )
+                self.last_chain_fetch = now
+                return self.cached_chain
+            elif self.config["dry_run"]:
                 # Use yfinance for option chain in dry run
                 import yfinance as yf
                 ticker = yf.Ticker(self.config["underlying"])
